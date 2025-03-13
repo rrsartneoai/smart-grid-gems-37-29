@@ -1,10 +1,57 @@
+import axios from 'axios';
+
 export const fetchAirlyData = async () => {
   const AIRLY_API_KEY = process.env.REACT_APP_AIRLY_API_KEY;
-  // Implementacja pobierania danych z Airly API
+  const TROJMIASTO_COORDINATES = [
+    { name: 'Gdańsk', lat: 54.3520, lng: 18.6466 },
+    { name: 'Gdynia', lat: 54.5187, lng: 18.5309 },
+    { name: 'Sopot', lat: 54.4405, lng: 18.5674 },
+  ];
+
+  try {
+    const promises = TROJMIASTO_COORDINATES.map(city =>
+      axios.get('https://airapi.airly.eu/v2/measurements/nearest', {
+        headers: {
+          apikey: AIRLY_API_KEY,
+          'Accept-Language': 'en',
+        },
+        params: {
+          lat: city.lat,
+          lng: city.lng,
+          maxDistanceKM: 5,
+        },
+      })
+        .then(response => {
+          const data = response.data;
+          return {
+            id: `airly-${data.id}-${city.name}`,
+            lat: data.location.latitude,
+            lng: data.location.longitude,
+            source: 'Airly',
+            stationName: city.name,
+            region: city.name,
+            pm25: data.current.values.find(v => v.name === 'PM25')?.value || 0,
+            pm10: data.current.values.find(v => v.name === 'PM10')?.value || 0,
+            timestamp: data.current.fromDateTime,
+            additionalData: {
+              aqi: data.current.indexes.find(i => i.name === 'AIRLY_CAQI')?.value || null,
+              temperature: data.current.values.find(v => v.name === 'TEMPERATURE')?.value,
+              humidity: data.current.values.find(v => v.name === 'HUMIDITY')?.value,
+            },
+          };
+        })
+    );
+
+    const results = await Promise.all(promises);
+    return results;
+  } catch (error) {
+    console.error('Błąd podczas pobierania danych z Airly:', error);
+    return [];
+  }
 };
 
 export const fetchGIOSData = async () => {
-  // Implementacja pobierania danych z GIOŚ API
+  return [];
 };
 
 interface AQICNResponse {
@@ -58,7 +105,7 @@ export const fetchAQICNData = async () => {
         .then((data: AQICNResponse) => {
           if (data.status === 'ok') {
             return {
-              id: `aqicn-${data.data.idx}`,
+              id: `aqicn-${data.data.idx}-${station.name}`,
               lat: data.data.city.geo[0],
               lng: data.data.city.geo[1],
               source: 'AQICN',
@@ -68,7 +115,7 @@ export const fetchAQICNData = async () => {
               pm10: data.data.iaqi.pm10?.v || 0,
               timestamp: data.data.time.iso,
               additionalData: {
-                aqi: data.data.aqi,
+                aqi: data.data.aqi !== undefined ? data.data.aqi : null,
                 temperature: data.data.iaqi.t?.v,
                 humidity: data.data.iaqi.h?.v,
                 co: data.data.iaqi.co?.v,

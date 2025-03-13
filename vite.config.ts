@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: ["8080-rrsartneoai-smartgridge-oi7sdi8z6ol.ws-eu118.gitpod.io"],
+    allowedHosts: ["8080-rrsartneoai-smartgridge-oi7sdi8z6ol.ws-eu118.gitpod.io", "8080-rrsartneoai-smartgridge-l4kffhovq95.ws-eu118.gitpod.io", "8081-rrsartneoai-smartgridge-l4kffhovq95.ws-eu118.gitpod.io"],
   },
   plugins: [
     react(),

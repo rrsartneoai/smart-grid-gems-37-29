@@ -94,17 +94,17 @@ export const AirQualityMap = () => {
                 position={[sensor.lat, sensor.lng]}
                 icon={L.divIcon({
                   className: 'custom-marker',
-                  html: `<div style="background-color: ${getAQIColor(sensor.additionalData?.aqi || 0)}; 
-                                  width: 30px; 
-                                  height: 30px; 
-                                  border-radius: 50%; 
-                                  display: flex; 
-                                  align-items: center; 
-                                  justify-content: center;
-                                  color: white;
-                                  font-weight: bold;">
-                          ${sensor.additionalData?.aqi || '?'}
-                        </div>`
+                  html: `<div style="background-color: ${getAQIColor(sensor.additionalData?.aqi || 0)};
+                                                     width: 30px;
+                                                     height: 30px;
+                                                     border-radius: 50%;
+                                                     display: flex;
+                                                     align-items: center;
+                                                     justify-content: center;
+                                                     color: white;
+                                                     font-weight: bold;">
+                                            ${sensor.additionalData?.aqi != null ? sensor.additionalData.aqi : '?'}
+                                          </div>`
                 })}
               >
                 <Popup>
