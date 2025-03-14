@@ -1,7 +1,7 @@
 
 import { Thermometer, Cloud, Wind, Atom, Droplet, Volume2, Gauge, Sun } from "lucide-react";
 
-export type SensorIconType = "temperature" | "co2" | "voc" | "pm25" | "pm10" | "humidity" | "noise" | "pressure" | "light";
+export type SensorIconType = "temperature" | "co" | "co2" | "voc" | "pm25" | "pm10" | "humidity" | "noise" | "pressure" | "light";
 
 interface SensorIconProps {
   type: SensorIconType;

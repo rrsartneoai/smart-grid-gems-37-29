@@ -8,7 +8,7 @@ import { DataComparison } from "./DataComparison";
 import { Search, Battery, Signal, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AirQualityChart } from "../dashboard/AirQualityChart";
@@ -17,6 +17,7 @@ import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
 const SensorsPanel = () => {
+   const queryClient = useQueryClient();
   const [selectedCity, setSelectedCity] = useState<string>("gdansk");
   const [searchQuery, setSearchQuery] = useState("");
   const { t } = useTranslation();
@@ -82,34 +83,30 @@ const SensorsPanel = () => {
     }
   };
 
-  const { data: weatherData } = useQuery({
-    queryKey: ['weather', selectedCity],
-    queryFn: async () => {
-      const city = sensorsData[selectedCity];
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${city.coordinates.lat}&lon=${city.coordinates.lon}&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}&units=metric&lang=pl`
-      );
-      if (!response.ok) {
-        throw new Error(t("weatherDataError"));
-      }
-      return response.json();
-    },
-    refetchInterval: 300000,
-  });
+  const weatherData = null;
 
   const { data: airQualityData } = useQuery({
     queryKey: ['airQuality', selectedCity],
     queryFn: async () => {
-      const city = sensorsData[selectedCity];
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/air_pollution?lat=${city.coordinates.lat}&lon=${city.coordinates.lon}&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}`
-      );
-      if (!response.ok) {
-        throw new Error(t("airQualityError"));
+      try {
+        const response = await fetch(
+          `https://api.waqi.info/feed/@2684/?token=5a1271b20fbbb9c972814a7b8d31512e061e83e6`
+        );
+        if (!response.ok) {
+          throw new Error(t("airQualityError"));
+        }
+        const json = await response.json();
+        return json.data;
+      } catch (error) {
+        console.error("Air quality data fetch error:", error);
+        throw error;
       }
-      return response.json();
     },
-    refetchInterval: 300000,
+    refetchInterval: 60000,
+    retry: 3,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['airQuality', selectedCity] });
+    }
   });
 
   const currentCityData = sensorsData[selectedCity];
@@ -119,47 +116,49 @@ const SensorsPanel = () => {
   };
 
   const getSensorData = (sensorName: string) => {
-    if (!weatherData || !airQualityData) return null;
+    if (!airQualityData?.iaqi) return null;
+
+    const iaqi = airQualityData.iaqi;
 
     switch (sensorName) {
       case "Temp":
         return {
-          value: weatherData.main.temp.toFixed(1),
-          description: `Temperatura odczuwalna: ${weatherData.main.feels_like.toFixed(1)}°C`,
+          value: iaqi.t?.v?.toFixed(1) ?? 'N/A',
+          description: "Temperatura powietrza",
         };
       case "Humidity":
         return {
-          value: weatherData.main.humidity,
+          value: iaqi.h?.v ?? 'N/A',
           description: "Wilgotność względna powietrza",
         };
       case "PM 2.5":
         return {
-          value: airQualityData.list[0].components.pm2_5.toFixed(1),
+          value: iaqi.pm25?.v?.toFixed(1) ?? 'N/A',
           description: "Pył zawieszony PM2.5",
         };
       case "PM10":
         return {
-          value: airQualityData.list[0].components.pm10.toFixed(1),
+          value: iaqi.pm10?.v?.toFixed(1) ?? 'N/A',
           description: "Pył zawieszony PM10",
         };
       case "NO₂":
         return {
-          value: airQualityData.list[0].components.no2.toFixed(1),
+          value: iaqi.no2?.v?.toFixed(1) ?? 'N/A',
           description: "Dwutlenek azotu",
         };
       case "SO₂":
         return {
-          value: airQualityData.list[0].components.so2.toFixed(1),
+          value: iaqi.so2?.v?.toFixed(1) ?? 'N/A',
           description: "Dwutlenek siarki",
         };
       case "CO":
         return {
-          value: airQualityData.list[0].components.co.toFixed(0),
+          value: iaqi.co?.v?.toFixed(0) ?? 'N/A',
           description: "Tlenek węgla",
         };
       case "O₃":
         return {
-          value: airQualityData.list[0].components.o3.toFixed(1),
+          value: iaqi.o3?.v?.toFixed(1) ?? 'N/A',
           description: "Ozon",
         };
       default:
@@ -268,7 +267,7 @@ const SensorsPanel = () => {
             <div className="mt-8 space-y-8">
               <AlertsConfig />
               <DataComparison />
-              <AirQualityChart />
+              <AirQualityChart airQualityData={airQualityData}/>
               
               <div className="bg-card rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Dane dla miasta {currentCityData.name}</h3>

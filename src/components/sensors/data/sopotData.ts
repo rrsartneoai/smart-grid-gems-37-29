@@ -1,4 +1,3 @@
-
 import { CityData } from "../types/SensorDataTypes";
 import { sensorDescriptions } from "../constants/sensorDescriptions";
 
@@ -18,25 +17,17 @@ export const sopotData: CityData = {
       description: sensorDescriptions.temp,
     },
     {
-      iconType: "co2",
-      name: "CO₂",
-      value: "495",
+      iconType: "co",
+      name: "CO",
+      value: "2.7",
       unit: "ppm",
       status: "Good",
       description: sensorDescriptions.co2,
     },
     {
-      iconType: "voc",
-      name: "VOC",
-      value: "45",
-      unit: "ppb",
-      status: "Good",
-      description: sensorDescriptions.voc,
-    },
-    {
       iconType: "pm25",
       name: "PM 2.5",
-      value: "10",
+      value: "33",
       unit: "µg/m³",
       status: "Good",
       description: sensorDescriptions.pm25,
@@ -44,7 +35,7 @@ export const sopotData: CityData = {
     {
       iconType: "pm10",
       name: "PM10",
-      value: "13",
+      value: "15",
       unit: "µg/m³",
       status: "Good",
       description: sensorDescriptions.pm10,
@@ -52,34 +43,18 @@ export const sopotData: CityData = {
     {
       iconType: "humidity",
       name: "Humidity",
-      value: "50",
+      value: "80",
       unit: "%",
       status: "Good",
       description: sensorDescriptions.humidity,
     },
     {
-      iconType: "noise",
-      name: "Noise",
-      value: "43",
-      unit: "dBA",
-      status: "Good",
-      description: sensorDescriptions.noise,
-    },
-    {
       iconType: "pressure",
       name: "Pressure",
-      value: "1014",
+      value: "1011",
       unit: "hPa",
       status: "Good",
       description: sensorDescriptions.pressure,
-    },
-    {
-      iconType: "light",
-      name: "Light",
-      value: "68",
-      unit: "%",
-      status: "Good",
-      description: sensorDescriptions.light,
     },
   ],
 };

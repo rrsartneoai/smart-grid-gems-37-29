@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import {
   LineChart,
@@ -11,15 +10,6 @@ import {
   Legend,
   Label,
 } from "recharts";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { fetchAirQuality } from "@/services/weatherService";
-
-const GDANSK_COORDINATES = {
-  lat: 54.372158,
-  lon: 18.638306,
-};
 
 interface AirQualityTooltipProps {
   active?: boolean;
@@ -29,6 +19,10 @@ interface AirQualityTooltipProps {
     dataKey: string;
   }>;
   label?: string;
+}
+
+interface AirQualityChartProps {
+  airQualityData: any;
 }
 
 const pollutantLabels: Record<string, string> = {
@@ -58,40 +52,18 @@ const AirQualityTooltip = ({ active, payload, label }: AirQualityTooltipProps) =
   );
 };
 
-export function AirQualityChart() {
-  const { toast } = useToast();
-
-  const { data: airQualityData, isLoading, refetch } = useQuery({
-    queryKey: ["airQuality", GDANSK_COORDINATES],
-    queryFn: () => fetchAirQuality(GDANSK_COORDINATES.lat, GDANSK_COORDINATES.lon),
-    refetchInterval: 300000, // Refresh every 5 minutes
-    meta: {
-      onError: () => {
-        toast({
-          title: "Błąd pobierania danych",
-          description: "Nie udało się pobrać danych o jakości powietrza",
-          variant: "destructive",
-        });
-      },
-    },
-  });
-
-  const formattedData = airQualityData?.list?.[0]?.components
+export function AirQualityChart({ airQualityData }: AirQualityChartProps) {
+  const formattedData = airQualityData?.iaqi
     ? [
         {
           name: new Date().toLocaleTimeString(),
-          ...airQualityData.list[0].components,
+          pm2_5: airQualityData.iaqi.pm25?.v,
+          pm10: airQualityData.iaqi.pm10?.v,
+          o3: airQualityData.iaqi.o3?.v,
+          no2: airQualityData.iaqi.no2?.v,
         },
       ]
     : [];
-
-  const handleRefresh = () => {
-    refetch();
-    toast({
-      title: "Odświeżanie danych",
-      description: "Trwa pobieranie najnowszych danych o jakości powietrza",
-    });
-  };
 
   return (
     <Card className="col-span-4 p-6">
@@ -101,19 +73,9 @@ export function AirQualityChart() {
             Monitorowanie jakości powietrza w czasie rzeczywistym
           </h3>
           <p className="text-sm text-muted-foreground">
-            Aktualne parametry jakości powietrza w Gdańsku
+            Aktualne parametry jakości powietrza
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          className="gap-2"
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          Odśwież dane
-        </Button>
       </div>
 
       <div className="h-[400px] w-full">
