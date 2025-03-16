@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from 'react';
 import { MapContainer as LeafletMapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
@@ -164,9 +165,9 @@ export function MapContainer() {
                   temperature: data.data.iaqi.t?.v || 0,
                   wind: data.data.iaqi.w?.v || 0,
                   timestamp: data.data.time.iso,
+                  source: 'AQICN'
                 },
-                history,
-                source: 'AQICN'
+                history
               };
             }
             return null;
@@ -442,32 +443,3 @@ export const fetchAQICNData = async (): Promise<SensorData[]> => {
     return [];
   }
 };
-
-</file_content>
-
-IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
-
-
-
-New problems detected after saving the file:
-src/components/pomerania/map/MapContainer.tsx
-- [ts Error] Line 6: Cannot find module '@/components/ui/spinner' or its corresponding type declarations.
-- [ts Error] Line 179: A type predicate's type must be assignable to its parameter's type.
-  Property 'source' is missing in type 'AirQualityData' but required in type '{ id: string; stationName: string; region: string; coordinates: any; measurements: { aqi: any; pm25: any; pm10: any; o3: any; no2: any; so2: any; co: any; humidity: any; pressure: any; temperature: any; wind: any; timestamp: any; }; history: any; source: string; }'.
-- [ts Error] Line 321: Object literal may only specify known properties, and 'source' does not exist in type 'AdditionalData'.
-- [ts Error] Line 385: Object literal may only specify known properties, and 'source' does not exist in type 'AdditionalData'.
-- [ts Error] Line 420: Type 'string' is not assignable to type '"Sopot" | "Gdańsk" | "Gdynia"'.<environment_details>
-# VSCode Visible Files
-src/components/pomerania/map/MapContainer.tsx
-
-# VSCode Open Tabs
-src/components/AirQualityMap.tsx
-src/api/airQuality.ts
-src/components/pomerania/map/MapContainer.tsx
-
-# Current Time
-3/9/2025, 7:53:59 PM (Europe/Warsaw, UTC+1:00)
-
-# Current Mode
-ACT MODE
-</environment_details>
