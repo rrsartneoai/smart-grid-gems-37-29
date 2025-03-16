@@ -9,25 +9,27 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { SensorIcon, SensorIconType } from "./SensorIcon";
+import { SensorIcon } from "./SensorIcon";
+import { SensorData } from "./types/SensorDataTypes";
 
-interface SensorCardProps {
-  iconType: SensorIconType;
-  name: string;
-  value: string;
-  unit: string;
-  status: "Good" | "Warning";
-  description: string;
+export interface SensorCardProps {
+  sensor: SensorData;
+  isSelected: boolean;
+  onClick: () => void;
 }
 
-export const SensorCard = ({ iconType, name, value, unit, status, description }: SensorCardProps) => {
+export const SensorCard = ({ sensor, isSelected, onClick }: SensorCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { iconType, name, value, unit, status, description } = sensor;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Card className="p-4 transition-all duration-200 hover:shadow-md">
+          <Card 
+            className={`p-4 transition-all duration-200 hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''}`}
+            onClick={onClick}
+          >
             <Collapsible
               open={isOpen}
               onOpenChange={setIsOpen}

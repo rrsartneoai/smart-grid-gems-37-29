@@ -13,25 +13,8 @@ import { ExportData } from './ExportData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAQICNData } from '@/api/airQuality';
-
-interface SensorCardProps {
-  sensor: SensorData;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
-interface HistoricalChartProps {
-  sensor: SensorData;
-}
-
-interface DataComparisonProps {
-  sensors: SensorData[];
-}
-
-interface ExportDataProps {
-  sensors: SensorData[];
-  city: string;
-}
+import { CityTabs } from './CityTabs';
+import { Spinner } from '@/components/ui/spinner';
 
 export function SensorsPanel() {
   const [selectedCity, setSelectedCity] = useState('gdansk');
@@ -41,7 +24,7 @@ export function SensorsPanel() {
   // Use the selectedCity to determine which data to show
   const cityData = sensorsData[selectedCity as keyof typeof sensorsData];
   
-  const handleCityChange = (cityId: string) => {
+  const handleCitySelect = (cityId: string) => {
     setSelectedCity(cityId);
     setSelectedSensor(null); // Reset selected sensor when changing city
   };
@@ -62,11 +45,6 @@ export function SensorsPanel() {
       return fetchAQICNData();
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    meta: {
-      onError: (err: Error) => {
-        console.error('Error fetching sensor data:', err);
-      }
-    }
   });
   
   // We'll continue using the static data for now but show a note that real data is loading
@@ -119,25 +97,11 @@ export function SensorsPanel() {
         </div>
         
         <div className="mt-4">
-          <Tabs value={selectedCity} onValueChange={handleCityChange} className="w-full">
-            <TabsList className="inline-flex min-w-full lg:w-full p-1">
-              {Object.keys(sensorsData).map((cityId) => (
-                <TabsTrigger 
-                  key={cityId} 
-                  value={cityId} 
-                  className="relative flex-1 px-3 py-1.5 text-sm whitespace-nowrap"
-                >
-                  {sensorsData[cityId as keyof typeof sensorsData].name}
-                  {selectedCity === cityId && (
-                    <motion.div
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                      layoutId="activeTab"
-                    />
-                  )}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <CityTabs 
+            cities={cities} 
+            selectedCity={selectedCity} 
+            onCitySelect={handleCitySelect} 
+          />
         </div>
         
         {isLoading && (

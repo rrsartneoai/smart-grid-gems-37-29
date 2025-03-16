@@ -1,24 +1,27 @@
+
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import * as XLSX from 'xlsx';
 import { sensorsData } from "./SensorsData";
+import { SensorData } from "./types/SensorDataTypes";
 
-export const ExportData = () => {
+export interface ExportDataProps {
+  sensors: SensorData[];
+  city: string;
+}
+
+export const ExportData = ({ sensors, city }: ExportDataProps) => {
   const { toast } = useToast();
 
   const exportToExcel = () => {
     try {
-      const data = Object.entries(sensorsData).map(([city, cityData]) => {
-        const sensorReadings = cityData.sensors.reduce((acc, sensor) => ({
-          ...acc,
-          [`${sensor.name} (${sensor.unit})`]: sensor.value
-        }), {});
-
-        return {
-          City: cityData.name,
-          ...sensorReadings
-        };
-      });
+      const data = sensors.map(sensor => ({
+        Name: sensor.name,
+        Value: sensor.value,
+        Unit: sensor.unit,
+        Status: sensor.status,
+        City: sensorsData[city as keyof typeof sensorsData].name
+      }));
 
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
@@ -40,17 +43,13 @@ export const ExportData = () => {
 
   const exportToCSV = () => {
     try {
-      const data = Object.entries(sensorsData).map(([city, cityData]) => {
-        const sensorReadings = cityData.sensors.reduce((acc, sensor) => ({
-          ...acc,
-          [`${sensor.name} (${sensor.unit})`]: sensor.value
-        }), {});
-
-        return {
-          City: cityData.name,
-          ...sensorReadings
-        };
-      });
+      const data = sensors.map(sensor => ({
+        Name: sensor.name,
+        Value: sensor.value,
+        Unit: sensor.unit,
+        Status: sensor.status,
+        City: sensorsData[city as keyof typeof sensorsData].name
+      }));
 
       const ws = XLSX.utils.json_to_sheet(data);
       const csv = XLSX.utils.sheet_to_csv(ws);

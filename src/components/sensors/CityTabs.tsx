@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
-interface CityTabsProps {
+export interface CityTabsProps {
   cities: string[];
   selectedCity: string;
   onCitySelect: (city: string) => void;
