@@ -1,4 +1,3 @@
-
 import { AirQualityData, AirQualitySource } from "@/types/company";
 import { isInTriCity } from "@/utils/locationUtils";
 
@@ -158,7 +157,6 @@ export const fetchGIOSData = async (stationId: string): Promise<AirQualityData |
         so2: measurements.so2,
         o3: measurements.o3,
         provider: 'GIOŚ',
-        aqi: airQualityIndex?.stIndexLevel?.id || 0,
         aqiInfo: {
           level: stationIndex.level,
           color: stationIndex.color,
