@@ -1,10 +1,10 @@
+
 export interface SensorData {
   id: string;
   lat: number;
   lng: number;
-  source: 'Airly' | 'GIOS' | 'AQICN';
   stationName: string;
-  region: 'Gdańsk' | 'Gdynia' | 'Sopot';
+  region: string;
   pm25: number;
   pm10: number;
   timestamp: string;
@@ -19,4 +19,5 @@ export interface AdditionalData {
   no2?: number;
   so2?: number;
   o3?: number;
-} 
+  source?: 'Airly' | 'GIOS' | 'AQICN';
+}

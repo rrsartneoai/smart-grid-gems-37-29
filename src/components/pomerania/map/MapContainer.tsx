@@ -13,16 +13,16 @@ type AirQualitySource = 'AQICN' | 'GIOS' | 'Airly';
 interface HistoricalData {
   timestamp: string;
   values: {
-    pm25: number;
-    pm10: number;
-    o3: number;
-    no2: number;
-    so2: number;
-    co: number;
-    humidity: number;
-    pressure: number;
-    temperature: number;
-    wind: number;
+    pm25?: number;
+    pm10?: number;
+    o3?: number;
+    no2?: number;
+    so2?: number;
+    co?: number;
+    humidity?: number;
+    pressure?: number;
+    temperature?: number;
+    wind?: number;
   };
   min?: number;
   max?: number;
@@ -37,18 +37,18 @@ interface AirQualityData {
     aqi: number;
     pm25: number;
     pm10: number;
-    o3: number;
-    no2: number;
-    so2: number;
-    co: number;
-    humidity: number;
-    pressure: number;
-    temperature: number;
-    wind: number;
+    o3?: number;
+    no2?: number;
+    so2?: number;
+    co?: number;
+    humidity?: number;
+    pressure?: number;
+    temperature?: number;
+    wind?: number;
     timestamp: string;
     source: AirQualitySource;
   };
-  history: HistoricalData[];
+  history?: HistoricalData[];
 }
 
 // Funkcja pomocnicza do kolorowania markerów
@@ -151,7 +151,7 @@ export function MapContainer() {
                 id: `aqicn-${data.data.idx}`,
                 stationName: station.name,
                 region: station.name.split(' ')[0],
-                coordinates: data.data.city.geo,
+                coordinates: data.data.city.geo as [number, number],
                 measurements: {
                   aqi: data.data.aqi,
                   pm25: data.data.iaqi.pm25?.v || 0,
@@ -328,7 +328,15 @@ export const fetchAirlyData = async (): Promise<SensorData[]> => {
       }
     }
     
-    return allStations;
+    return allStations.map(station => {
+      return {
+        ...station,
+        additionalData: {
+          ...station.additionalData,
+          source: 'Airly'
+        }
+      };
+    });
   } catch (error) {
     console.error('Error fetching Airly installations:', error);
     return [];
@@ -355,17 +363,15 @@ export const fetchGIOSData = async (): Promise<SensorData[]> => {
         );
         const sensorData = await sensorResponse.json();
         
-        // Get the most recent valid measurements
         const getLatestValidValue = (values: any[]) => {
           if (!Array.isArray(values)) return 0;
           const validValues = values.filter(v => v && v.value !== null && !isNaN(v.value));
           return validValues.length > 0 ? validValues[0].value : 0;
         };
 
-        // Calculate AQI based on PM2.5 and PM10 values (simplified calculation)
         const calculateAQI = (pm25: number, pm10: number) => {
-          const pm25Index = (pm25 * 100) / 25; // 25 µg/m³ is the WHO guideline
-          const pm10Index = (pm10 * 100) / 50; // 50 µg/m³ is the WHO guideline
+          const pm25Index = (pm25 * 100) / 25;
+          const pm10Index = (pm10 * 100) / 50;
           return Math.max(pm25Index, pm10Index);
         };
 
@@ -392,7 +398,15 @@ export const fetchGIOSData = async (): Promise<SensorData[]> => {
       }
     }
     
-    return processedStations;
+    return processedStations.map(station => {
+      return {
+        ...station,
+        additionalData: {
+          ...station.additionalData,
+          source: 'GIOS'
+        }
+      };
+    });
   } catch (error) {
     console.error('Error fetching GIOŚ stations:', error);
     return [];
@@ -428,7 +442,8 @@ export const fetchAQICNData = async (): Promise<SensorData[]> => {
             additionalData: {
               aqi: data.data.aqi,
               temperature: data.data.iaqi.t?.v,
-              humidity: data.data.iaqi.h?.v
+              humidity: data.data.iaqi.h?.v,
+              source: 'AQICN'
             }
           });
         }

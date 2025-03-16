@@ -1,4 +1,6 @@
+
 export type AirQualitySource = 'AQICN' | 'GIOS' | 'Airly';
+export type StationRegion = 'Sopot' | 'Gdynia' | 'Gdańsk';
 
 export interface AirQualityData {
   id: string;
@@ -9,9 +11,30 @@ export interface AirQualityData {
     aqi: number;
     pm25: number;
     pm10: number;
-    temperature?: number;
+    o3?: number;
+    no2?: number;
+    so2?: number;
+    co?: number;
     humidity?: number;
+    pressure?: number;
+    temperature?: number;
+    wind?: number;
     timestamp: string;
     source: AirQualitySource;
   };
-} 
+  history?: Array<{
+    timestamp: string;
+    values: {
+      pm25?: number;
+      pm10?: number;
+      o3?: number;
+      no2?: number;
+      so2?: number;
+      co?: number;
+      humidity?: number;
+      pressure?: number;
+      temperature?: number;
+      wind?: number;
+    };
+  }>;
+}

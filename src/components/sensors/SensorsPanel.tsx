@@ -1,305 +1,156 @@
-import { useState } from "react";
-import { SensorCard } from "./SensorCard";
-import { CityTabs } from "./CityTabs";
-import { sensorsData, SensorData } from "./SensorsData";
-import { Input } from "@/components/ui/input";
-import { AlertsConfig } from "./AlertsConfig";
-import { DataComparison } from "./DataComparison";
-import { Search, Battery, Signal, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { AirQualityChart } from "../dashboard/AirQualityChart";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import * as XLSX from 'xlsx';
 
-const SensorsPanel = () => {
-   const queryClient = useQueryClient();
-  const [selectedCity, setSelectedCity] = useState<string>("gdansk");
-  const [searchQuery, setSearchQuery] = useState("");
-  const { t } = useTranslation();
+import React, { useState } from 'react';
+import { CitySelector } from './CitySelector';
+import { SensorCard } from './SensorCard';
+import { sensorsData } from './SensorsData';
+import { SensorData } from './types/SensorDataTypes';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertsConfig } from './AlertsConfig';
+import { ComparisonChart } from './ComparisonChart';
+import { HistoricalChart } from './HistoricalChart';
+import { DataComparison } from './DataComparison';
+import { ExportData } from './ExportData';
+import { CityTabs } from './CityTabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAQICNData } from '@/api/airQuality';
+
+export function SensorsPanel() {
+  const [selectedCity, setSelectedCity] = useState('gdansk');
+  const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
+  const [view, setView] = useState('cards');
   
-  const cities = Object.keys(sensorsData).map(key => 
-    key.charAt(0).toUpperCase() + key.slice(1)
-  );
-
-  const handleExport = async (format: 'pdf' | 'jpg' | 'xlsx' | 'csv') => {
-    const element = document.getElementById('sensors-panel');
-    if (!element) return;
-
-    try {
-      if (format === 'pdf' || format === 'jpg') {
-        const canvas = await html2canvas(element);
-        if (format === 'pdf') {
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const imgData = canvas.toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-          pdf.save('sensors-data.pdf');
-        } else {
-          const link = document.createElement('a');
-          link.download = 'sensors-data.jpg';
-          link.href = canvas.toDataURL('image/jpeg');
-          link.click();
-        }
-      } else {
-        const data = Object.entries(sensorsData).map(([city, cityData]) => {
-          const sensorReadings = cityData.sensors.reduce((acc, sensor) => ({
-            ...acc,
-            [`${sensor.name} (${sensor.unit})`]: sensor.value
-          }), {});
-
-          return {
-            City: cityData.name,
-            ...sensorReadings
-          };
-        });
-
-        if (format === 'xlsx') {
-          const ws = XLSX.utils.json_to_sheet(data);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Sensor Data");
-          XLSX.writeFile(wb, "sensor-data.xlsx");
-        } else {
-          const ws = XLSX.utils.json_to_sheet(data);
-          const csv = XLSX.utils.sheet_to_csv(ws);
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement("a");
-          const url = URL.createObjectURL(blob);
-          link.setAttribute("href", url);
-          link.setAttribute("download", "sensor-data.csv");
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      }
-      
-      toast.success(`Eksport do ${format.toUpperCase()} zakończony sukcesem`);
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error(`Błąd podczas eksportu do ${format.toUpperCase()}`);
-    }
+  // Use the selectedCity to determine which data to show
+  const cityData = sensorsData[selectedCity as keyof typeof sensorsData];
+  
+  const handleCityChange = (cityId: string) => {
+    setSelectedCity(cityId);
+    setSelectedSensor(null); // Reset selected sensor when changing city
   };
-
-  const weatherData = null;
-
-  const { data: airQualityData } = useQuery({
-    queryKey: ['airQuality', selectedCity],
-    queryFn: async () => {
-      try {
-        const response = await fetch(
-          `https://api.waqi.info/feed/@2684/?token=5a1271b20fbbb9c972814a7b8d31512e061e83e6`
-        );
-        if (!response.ok) {
-          throw new Error(t("airQualityError"));
-        }
-        const json = await response.json();
-        return json.data;
-      } catch (error) {
-        console.error("Air quality data fetch error:", error);
-        throw error;
-      }
+  
+  const handleSensorSelect = (sensor: SensorData) => {
+    setSelectedSensor(sensor);
+  };
+  
+  const handleViewChange = (newView: string) => {
+    setView(newView);
+  };
+  
+  // This query fetches real-time data from API
+  const { data: realTimeData, isLoading, error } = useQuery({
+    queryKey: ['sensors', selectedCity],
+    queryFn: () => {
+      console.log('Fetching real-time data for', selectedCity);
+      return fetchAQICNData();
     },
-    refetchInterval: 60000,
-    retry: 3,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['airQuality', selectedCity] });
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    meta: {
+      onError: (err: Error) => {
+        console.error('Error fetching sensor data:', err);
+      }
     }
   });
-
-  const currentCityData = sensorsData[selectedCity];
-
-  const handleCitySelect = (city: string) => {
-    setSelectedCity(city.toLowerCase());
-  };
-
-  const getSensorData = (sensorName: string) => {
-    if (!airQualityData?.iaqi) return null;
-
-    const iaqi = airQualityData.iaqi;
-
-    switch (sensorName) {
-      case "Temp":
-        return {
-          value: iaqi.t?.v?.toFixed(1) ?? 'N/A',
-          description: "Temperatura powietrza",
-        };
-      case "Humidity":
-        return {
-          value: iaqi.h?.v ?? 'N/A',
-          description: "Wilgotność względna powietrza",
-        };
-      case "PM 2.5":
-        return {
-          value: iaqi.pm25?.v?.toFixed(1) ?? 'N/A',
-          description: "Pył zawieszony PM2.5",
-        };
-      case "PM10":
-        return {
-          value: iaqi.pm10?.v?.toFixed(1) ?? 'N/A',
-          description: "Pył zawieszony PM10",
-        };
-      case "NO₂":
-        return {
-          value: iaqi.no2?.v?.toFixed(1) ?? 'N/A',
-          description: "Dwutlenek azotu",
-        };
-      case "SO₂":
-        return {
-          value: iaqi.so2?.v?.toFixed(1) ?? 'N/A',
-          description: "Dwutlenek siarki",
-        };
-      case "CO":
-        return {
-          value: iaqi.co?.v?.toFixed(0) ?? 'N/A',
-          description: "Tlenek węgla",
-        };
-      case "O₃":
-        return {
-          value: iaqi.o3?.v?.toFixed(1) ?? 'N/A',
-          description: "Ozon",
-        };
-      default:
-        return null;
-    }
-  };
-
-  const filteredSensors = currentCityData.sensors.map(sensor => {
-    const realData = getSensorData(sensor.name);
-    if (realData) {
-      return {
-        ...sensor,
-        value: realData.value,
-        description: realData.description,
-      };
-    }
-    return sensor;
-  }).filter(sensor =>
-    sensor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sensor.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+  
+  // We'll continue using the static data for now but show a note that real data is loading
+  const displayData = cityData ? cityData.sensors : [];
+  
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4" id="sensors-panel">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl sm:text-2xl font-bold">Czujniki i jakość powietrza</h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <span>{t('lastSync')}: 1h</span>
-            <Battery className="w-4 h-4 ml-4" />
-            <span>100% est. battery</span>
-            <Signal className="w-4 h-4 ml-4" />
-            <span>-71 dBm</span>
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <CardTitle>Czujniki jakości powietrza</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleViewChange('cards')}
+              className={`px-3 py-1 text-sm rounded ${view === 'cards' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary text-secondary-foreground'}`}
+            >
+              Karty
+            </button>
+            <button
+              onClick={() => handleViewChange('comparison')}
+              className={`px-3 py-1 text-sm rounded ${view === 'comparison' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary text-secondary-foreground'}`}
+            >
+              Porównanie
+            </button>
+            <button
+              onClick={() => handleViewChange('historical')}
+              className={`px-3 py-1 text-sm rounded ${view === 'historical' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary text-secondary-foreground'}`}
+            >
+              Historia
+            </button>
+            <button
+              onClick={() => handleViewChange('map')}
+              className={`px-3 py-1 text-sm rounded ${view === 'map' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-secondary text-secondary-foreground'}`}
+            >
+              Mapa
+            </button>
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 bg-card p-4 rounded-lg shadow-sm">
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t('searchSensors')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              onClick={() => handleExport('pdf')}
-              variant="outline"
-              className="bg-primary/10 hover:bg-primary/20 text-primary"
-            >
-              {t('exportToPDF')}
-            </Button>
-            <Button
-              onClick={() => handleExport('jpg')}
-              variant="outline"
-              className="bg-primary/10 hover:bg-primary/20 text-primary"
-            >
-              {t('exportToJPG')}
-            </Button>
-            <Button
-              onClick={() => handleExport('xlsx')}
-              variant="outline"
-              className="bg-primary/10 hover:bg-primary/20 text-primary"
-            >
-              {t('exportToExcel')}
-            </Button>
-            <Button
-              onClick={() => handleExport('csv')}
-              variant="outline"
-              className="bg-primary/10 hover:bg-primary/20 text-primary"
-            >
-              {t('exportToCSV')}
-            </Button>
-          </div>
+        
+        <div className="mt-4">
+          <CityTabs onCityChange={handleCityChange} selectedCity={selectedCity} />
         </div>
-
-        <div className="mb-6">
-          <CityTabs
-            cities={cities}
-            selectedCity={selectedCity}
-            onCitySelect={handleCitySelect}
-          />
-        </div>
-
-        {currentCityData && (
-          <>
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredSensors.map((sensor, index) => (
-                <SensorCard 
-                  key={index}
-                  iconType={sensor.iconType}
-                  name={sensor.name}
-                  value={sensor.value}
-                  unit={sensor.unit}
-                  status={sensor.status}
-                  description={sensor.description}
-                />
-              ))}
-            </div>
-
-            <div className="mt-8 space-y-8">
-              <AlertsConfig />
-              <DataComparison />
-              <AirQualityChart airQualityData={airQualityData}/>
-              
-              <div className="bg-card rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4">Dane dla miasta {currentCityData.name}</h3>
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-muted-foreground">
-                    Poniżej znajdują się szczegółowe informacje o jakości powietrza i warunkach środowiskowych w mieście {currentCityData.name}. 
-                    Wszystkie pomiary są aktualizowane w czasie rzeczywistym, zapewniając dokładny obraz stanu środowiska.
-                  </p>
-                  <div className="mt-4 grid gap-2">
-                    {currentCityData.sensors.map((sensor, index) => (
-                      <div key={index} className="p-4 rounded-lg bg-background/50 border">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium">{sensor.name}</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-xl font-semibold">{sensor.value}</span>
-                            <span className="text-sm text-muted-foreground">{sensor.unit}</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{sensor.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
+        
+        {isLoading && (
+          <div className="text-sm text-muted-foreground">
+            Ładowanie aktualnych danych z czujników...
+          </div>
         )}
-      </div>
-    </div>
+        
+        {error && (
+          <div className="text-sm text-destructive">
+            Wystąpił błąd podczas ładowania danych. Wyświetlam dane archiwalne.
+          </div>
+        )}
+      </CardHeader>
+      
+      <CardContent>
+        {view === 'cards' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {displayData.map((sensor, index) => (
+              <SensorCard 
+                key={index} 
+                sensor={sensor} 
+                isSelected={selectedSensor?.name === sensor.name}
+                onClick={() => handleSensorSelect(sensor)} 
+              />
+            ))}
+          </div>
+        )}
+        
+        {view === 'comparison' && <DataComparison sensors={displayData} />}
+        
+        {view === 'historical' && (
+          selectedSensor ? (
+            <HistoricalChart sensor={selectedSensor} />
+          ) : (
+            <div className="text-center p-10 text-muted-foreground">
+              Wybierz czujnik, aby zobaczyć dane historyczne
+            </div>
+          )
+        )}
+        
+        {view === 'map' && (
+          <div className="flex flex-col gap-4">
+            <div className="h-[500px] bg-muted rounded flex items-center justify-center">
+              Mapa czujników jakości powietrza zostanie tutaj wyświetlona
+            </div>
+          </div>
+        )}
+        
+        <div className="mt-6 flex flex-wrap gap-4">
+          <AlertsConfig />
+          <ExportData sensors={displayData} city={selectedCity} />
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default SensorsPanel;
+}

@@ -1,10 +1,11 @@
+
 import { useEffect, useRef, useState } from "react";
 import L from 'leaflet';
 
 interface AQICNData {
   id: string;
   stationName: string;
-  region: 'Gdańsk' | 'Gdynia' | 'Sopot';
+  region: string;
   coordinates: [number, number];
   measurements: {
     aqi: number;
@@ -54,7 +55,7 @@ export const useMapInitialization = () => {
                     humidity: data.data.iaqi.h?.v,
                     timestamp: data.data.time.iso
                   }
-                };
+                } as AQICNData;
               }
               return null;
             })

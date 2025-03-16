@@ -1,3 +1,4 @@
+
 import { AirQualityData } from '../../types/airQuality';
 
 const AQICN_STATIONS = [
@@ -23,7 +24,7 @@ export async function fetchAQICNData(): Promise<AirQualityData[]> {
           const data = await response.json();
           
           if (data.status === 'ok' && data.data) {
-            return {
+            const result: AirQualityData = {
               id: `aqicn-${station.id}`,
               stationName: station.name,
               region: station.region,
@@ -32,12 +33,19 @@ export async function fetchAQICNData(): Promise<AirQualityData[]> {
                 aqi: data.data.aqi,
                 pm25: data.data.iaqi.pm25?.v || 0,
                 pm10: data.data.iaqi.pm10?.v || 0,
+                o3: data.data.iaqi.o3?.v,
+                no2: data.data.iaqi.no2?.v,
+                so2: data.data.iaqi.so2?.v,
+                co: data.data.iaqi.co?.v,
                 temperature: data.data.iaqi.t?.v,
                 humidity: data.data.iaqi.h?.v,
+                pressure: data.data.iaqi.p?.v,
+                wind: data.data.iaqi.w?.v,
                 timestamp: data.data.time.iso,
-                source: 'AQICN' as const
+                source: 'AQICN'
               }
             };
+            return result;
           }
         } catch (error) {
           console.error(`AQICN - Błąd dla stacji ${station.name}:`, error);
@@ -51,4 +59,4 @@ export async function fetchAQICNData(): Promise<AirQualityData[]> {
     console.error('AQICN - Błąd ogólny:', error);
     return [];
   }
-} 
+}

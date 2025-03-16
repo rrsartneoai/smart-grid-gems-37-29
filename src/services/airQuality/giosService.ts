@@ -89,10 +89,15 @@ interface GIOSAirQualityIndex {
   };
 }
 
-const getIndexLevel = (index: any) => {
+interface IndexLevel {
+  level: string;
+  color: string;
+}
+
+const getIndexLevel = (index: any): IndexLevel => {
   if (!index) return { level: 'Unknown', color: '#808080' };
   
-  const levels = {
+  const levels: Record<string, IndexLevel> = {
     'Bardzo dobry': { level: 'Very Good', color: '#00FF00' },
     'Dobry': { level: 'Good', color: '#80FF00' },
     'Umiarkowany': { level: 'Moderate', color: '#FFFF00' },
@@ -155,11 +160,11 @@ export const fetchGIOSData = async (stationId: string): Promise<AirQualityData |
           description: airQualityIndex?.stIndexLevel?.indexLevelName || 'Unknown'
         },
         indexes: {
-          pm25: getIndexLevel(airQualityIndex?.pm25IndexLevel),
-          pm10: getIndexLevel(airQualityIndex?.pm10IndexLevel),
-          no2: getIndexLevel(airQualityIndex?.no2IndexLevel),
-          so2: getIndexLevel(airQualityIndex?.so2IndexLevel),
-          o3: getIndexLevel(airQualityIndex?.o3IndexLevel)
+          pm25Index: getIndexLevel(airQualityIndex?.pm25IndexLevel),
+          pm10Index: getIndexLevel(airQualityIndex?.pm10IndexLevel),
+          no2Index: getIndexLevel(airQualityIndex?.no2IndexLevel),
+          so2Index: getIndexLevel(airQualityIndex?.so2IndexLevel),
+          o3Index: getIndexLevel(airQualityIndex?.o3IndexLevel)
         }
       }
     };

@@ -88,7 +88,7 @@ export function SpacesTab() {
         </DndContext>
 
         <div className="grid gap-6 p-8">
-          <AirQualityChart />
+          <AirQualityChart airQualityData={{}} />
         </div>
 
         <div className="grid gap-6 p-8">
