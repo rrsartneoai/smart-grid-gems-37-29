@@ -3,7 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { processDocumentForRAG } from "@/utils/ragUtils";
-import { processImageFile, processPdfFile, processDocxFile } from "@/utils/fileProcessing";
+import { processImageFile, processPdfFile, processDocxFile, processCsvFile, processTextFile } from "@/utils/fileProcessing";
 import { useToast } from "@/hooks/use-toast";
 import { FileInfo } from "./upload/FileInfo";
 import { HelpCircle, FileText, Image as ImageIcon, Upload, X } from "lucide-react";
@@ -55,18 +55,15 @@ export function FileUpload() {
    };
 
    const validateFile = (file: File) => {
-       // Check file size
        if (file.size > MAX_FILE_SIZE) {
            return `Plik jest za duży. Maksymalny rozmiar to ${formatFileSize(MAX_FILE_SIZE)}`;
        }
 
-       // Check total size
        const currentTotalSize = uploadingFiles.reduce((acc, f) => acc + f.file.size, 0);
        if (currentTotalSize + file.size > MAX_TOTAL_SIZE) {
            return `Przekroczono łączny limit rozmiaru plików (${formatFileSize(MAX_TOTAL_SIZE)})`;
        }
 
-       // Check file type
        const isValidType = Object.entries(ALLOWED_FILE_TYPES).some(([type, extensions]) => {
            if (type.includes('*')) {
                const baseType = type.split('/')[0];
@@ -131,6 +128,12 @@ export function FileUpload() {
                text = await processPdfFile(file);
            } else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
                text = await processDocxFile(file);
+           } else if (file.type === "text/csv" || file.name.toLowerCase().endsWith('.csv')) {
+               text = await processCsvFile(file);
+           } else if (file.type === "text/plain" || file.name.toLowerCase().endsWith('.txt')) {
+               text = await processTextFile(file);
+           } else if (file.type === "application/xml" || file.name.toLowerCase().endsWith('.xml')) {
+               text = await processTextFile(file);
            } else {
                throw new Error("Nieobsługiwany format pliku");
            }
