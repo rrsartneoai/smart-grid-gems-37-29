@@ -164,13 +164,48 @@ export const fetchGIOSData = async (stationId: string): Promise<AirQualityData |
           color: stationIndex.color,
           description: airQualityIndex?.stIndexLevel?.indexLevelName || 'Unknown'
         },
-        indexes: {
-          pm25: pm25Index,
-          pm10: pm10Index,
-          no2: no2Index,
-          so2: so2Index,
-          o3: o3Index
-        }
+        indexes: [
+          {
+            name: "PM2.5",
+            value: measurements.pm25 || 0,
+            level: pm25Index.level,
+            description: "PM2.5 Index",
+            advice: "Based on PM2.5 concentration",
+            color: pm25Index.color
+          },
+          {
+            name: "PM10",
+            value: measurements.pm10 || 0,
+            level: pm10Index.level,
+            description: "PM10 Index",
+            advice: "Based on PM10 concentration",
+            color: pm10Index.color
+          },
+          {
+            name: "NO2",
+            value: measurements.no2 || 0,
+            level: no2Index.level,
+            description: "NO2 Index",
+            advice: "Based on NO2 concentration",
+            color: no2Index.color
+          },
+          {
+            name: "SO2",
+            value: measurements.so2 || 0,
+            level: so2Index.level,
+            description: "SO2 Index",
+            advice: "Based on SO2 concentration",
+            color: so2Index.color
+          },
+          {
+            name: "O3",
+            value: measurements.o3 || 0,
+            level: o3Index.level,
+            description: "O3 Index",
+            advice: "Based on O3 concentration",
+            color: o3Index.color
+          }
+        ]
       }
     };
   } catch (error) {
