@@ -140,6 +140,11 @@ export const fetchGIOSData = async (stationId: string): Promise<AirQualityData |
     });
 
     const stationIndex = getIndexLevel(airQualityIndex?.stIndexLevel);
+    const pm25Index = getIndexLevel(airQualityIndex?.pm25IndexLevel);
+    const pm10Index = getIndexLevel(airQualityIndex?.pm10IndexLevel);
+    const no2Index = getIndexLevel(airQualityIndex?.no2IndexLevel);
+    const so2Index = getIndexLevel(airQualityIndex?.so2IndexLevel);
+    const o3Index = getIndexLevel(airQualityIndex?.o3IndexLevel);
 
     return {
       source: await fetchGIOSStations().then(stations => 
@@ -160,11 +165,11 @@ export const fetchGIOSData = async (stationId: string): Promise<AirQualityData |
           description: airQualityIndex?.stIndexLevel?.indexLevelName || 'Unknown'
         },
         indexes: {
-          pm25Index: getIndexLevel(airQualityIndex?.pm25IndexLevel),
-          pm10Index: getIndexLevel(airQualityIndex?.pm10IndexLevel),
-          no2Index: getIndexLevel(airQualityIndex?.no2IndexLevel),
-          so2Index: getIndexLevel(airQualityIndex?.so2IndexLevel),
-          o3Index: getIndexLevel(airQualityIndex?.o3IndexLevel)
+          pm25: pm25Index,
+          pm10: pm10Index,
+          no2: no2Index,
+          so2: so2Index,
+          o3: o3Index
         }
       }
     };

@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import L from 'leaflet';
+import { AirQualityData, AirQualitySource } from "../types/airQuality";
 
 interface AQICNData {
   id: string;
@@ -46,7 +47,7 @@ export const useMapInitialization = () => {
                   id: `aqicn-${station.id}`,
                   stationName: station.name,
                   region: station.region,
-                  coordinates: data.data.city.geo,
+                  coordinates: data.data.city.geo as [number, number],
                   measurements: {
                     aqi: data.data.aqi,
                     pm25: data.data.iaqi.pm25?.v || 0,

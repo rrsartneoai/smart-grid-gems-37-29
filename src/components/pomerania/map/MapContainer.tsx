@@ -1,55 +1,12 @@
-
 import { useEffect, useState, useCallback } from 'react';
-import { MapContainer as LeafletMapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
+import { MapContainer as LeafletMapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SensorData } from '../types/sensors';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-
-type AirQualitySource = 'AQICN' | 'GIOS' | 'Airly';
-
-interface HistoricalData {
-  timestamp: string;
-  values: {
-    pm25?: number;
-    pm10?: number;
-    o3?: number;
-    no2?: number;
-    so2?: number;
-    co?: number;
-    humidity?: number;
-    pressure?: number;
-    temperature?: number;
-    wind?: number;
-  };
-  min?: number;
-  max?: number;
-}
-
-interface AirQualityData {
-  id: string;
-  stationName: string;
-  region: string;
-  coordinates: [number, number];
-  measurements: {
-    aqi: number;
-    pm25: number;
-    pm10: number;
-    o3?: number;
-    no2?: number;
-    so2?: number;
-    co?: number;
-    humidity?: number;
-    pressure?: number;
-    temperature?: number;
-    wind?: number;
-    timestamp: string;
-    source: AirQualitySource;
-  };
-  history?: HistoricalData[];
-}
+import { AirQualitySource, AirQualityData, HistoricalData } from '../types/airQuality';
 
 // Funkcja pomocnicza do kolorowania markerów
 const getAQIColor = (aqi: number): string => {
@@ -101,7 +58,7 @@ export function MapContainer() {
             temperature: item.iaqi.t?.v || 0,
             wind: item.iaqi.w?.v || 0
           }
-        }));
+        })) as HistoricalData[];
       }
       return [];
     } catch (error) {
@@ -147,7 +104,7 @@ export function MapContainer() {
             
             if (data.status === 'ok' && data.data) {
               const history = await fetchHistoricalData(station.id, AQICN_TOKEN);
-              return {
+              const result: AirQualityData = {
                 id: `aqicn-${data.data.idx}`,
                 stationName: station.name,
                 region: station.name.split(' ')[0],
@@ -156,19 +113,20 @@ export function MapContainer() {
                   aqi: data.data.aqi,
                   pm25: data.data.iaqi.pm25?.v || 0,
                   pm10: data.data.iaqi.pm10?.v || 0,
-                  o3: data.data.iaqi.o3?.v || 0,
-                  no2: data.data.iaqi.no2?.v || 0,
-                  so2: data.data.iaqi.so2?.v || 0,
-                  co: data.data.iaqi.co?.v || 0,
-                  humidity: data.data.iaqi.h?.v || 0,
-                  pressure: data.data.iaqi.p?.v || 0,
-                  temperature: data.data.iaqi.t?.v || 0,
-                  wind: data.data.iaqi.w?.v || 0,
+                  o3: data.data.iaqi.o3?.v,
+                  no2: data.data.iaqi.no2?.v,
+                  so2: data.data.iaqi.so2?.v,
+                  co: data.data.iaqi.co?.v,
+                  humidity: data.data.iaqi.h?.v,
+                  pressure: data.data.iaqi.p?.v,
+                  temperature: data.data.iaqi.t?.v,
+                  wind: data.data.iaqi.w?.v,
                   timestamp: data.data.time.iso,
                   source: 'AQICN'
                 },
                 history
               };
+              return result;
             }
             return null;
           } catch (error) {
@@ -320,7 +278,7 @@ export const fetchAirlyData = async (): Promise<SensorData[]> => {
               v.name.toUpperCase() === 'TEMPERATURE')?.value ?? null,
             humidity: measurements?.current?.values?.find((v: { name: string; value: number }) => 
               v.name.toUpperCase() === 'HUMIDITY')?.value ?? null,
-            source: 'Airly' as AirQualitySource
+            source: 'Airly'
           }
         });
       } catch (error) {
@@ -328,15 +286,7 @@ export const fetchAirlyData = async (): Promise<SensorData[]> => {
       }
     }
     
-    return allStations.map(station => {
-      return {
-        ...station,
-        additionalData: {
-          ...station.additionalData,
-          source: 'Airly'
-        }
-      };
-    });
+    return allStations;
   } catch (error) {
     console.error('Error fetching Airly installations:', error);
     return [];
@@ -390,7 +340,7 @@ export const fetchGIOSData = async (): Promise<SensorData[]> => {
           timestamp: timestamp,
           additionalData: {
             aqi: calculateAQI(pm25Value, pm10Value),
-            source: 'GIOS' as AirQualitySource
+            source: 'GIOS'
           }
         });
       } catch (error) {
@@ -398,15 +348,7 @@ export const fetchGIOSData = async (): Promise<SensorData[]> => {
       }
     }
     
-    return processedStations.map(station => {
-      return {
-        ...station,
-        additionalData: {
-          ...station.additionalData,
-          source: 'GIOS'
-        }
-      };
-    });
+    return processedStations;
   } catch (error) {
     console.error('Error fetching GIOŚ stations:', error);
     return [];

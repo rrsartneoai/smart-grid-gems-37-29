@@ -1,5 +1,5 @@
 
-import { AirQualityData } from '../../types/airQuality';
+import { AirQualityData, AirQualitySource } from '../../types/airQuality';
 
 const AQICN_STATIONS = [
   { id: '2684', name: 'Gdańsk-Wrzeszcz', region: 'Gdańsk' },
