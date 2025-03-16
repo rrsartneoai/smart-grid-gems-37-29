@@ -157,11 +157,6 @@ export const fetchGIOSData = async (stationId: string): Promise<AirQualityData |
         so2: measurements.so2,
         o3: measurements.o3,
         provider: 'GIOŚ',
-        aqiInfo: {
-          level: stationIndex.level,
-          color: stationIndex.color,
-          description: airQualityIndex?.stIndexLevel?.indexLevelName || 'Unknown'
-        },
         indexes: [
           {
             name: "PM2.5",
